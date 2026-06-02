@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Canadian Cities — Labour &amp; Population</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef1f4; --surface:#ffffff; --ink:#1b2733; --muted:#5e6b7a; --faint:#8b97a4;
+  --hair:#e2e7ec; --hair2:#eef1f4; --accent:#1f5a99; --accent-wash:rgba(31,90,153,.08);
+  --natl:#aab4bf; --up:#b6473b; --down:#1c7d57;
+  --shadow:0 1px 2px rgba(27,39,51,.05),0 1px 3px rgba(27,39,51,.04);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:"Libre Franklin",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;font-feature-settings:"tnum" 1;}
+.num{font-variant-numeric:tabular-nums}
+.wrap{max-width:1080px;margin:0 auto;padding:32px 22px 70px}
+
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:22px;
+  padding-bottom:18px;border-bottom:1px solid var(--hair)}
+.brand .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.brand h1{font-size:clamp(23px,3.2vw,32px);font-weight:700;line-height:1.1;margin:7px 0 0;letter-spacing:-.02em}
+.vint{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.chip{font-size:11.5px;color:var(--muted);background:var(--surface);border:1px solid var(--hair);border-radius:6px;padding:5px 9px;white-space:nowrap}
+.chip b{color:var(--ink);font-weight:600}
+.sub{font-size:13px;color:var(--muted);max-width:72ch;line-height:1.55;margin:16px 0 22px}
+.sub b{color:var(--ink);font-weight:600}
+
+.seg{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.seg button{font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--muted);
+  background:var(--surface);border:1px solid var(--hair);padding:7px 12px;border-radius:7px;transition:.14s;position:relative}
+.seg button:hover{color:var(--ink);border-color:var(--faint)}
+.seg button.on{color:#fff;background:var(--accent);border-color:var(--accent)}
+.seg button .dot{display:inline-block;width:4px;height:4px;border-radius:50%;background:var(--faint);margin-left:6px;vertical-align:middle}
+.seg button.on .dot{background:rgba(255,255,255,.8)}
+.seglegend{font-size:11.5px;color:var(--faint);margin:0 0 24px}
+
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px}
+.card{background:var(--surface);border:1px solid var(--hair);border-radius:10px;padding:18px 18px 16px;box-shadow:var(--shadow)}
+.card .lab{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.card .val{font-weight:700;font-size:38px;line-height:1.05;margin-top:12px;letter-spacing:-.02em}
+.card .val.na{color:var(--faint);font-weight:600;font-size:30px}
+.card .val .u{font-size:16px;color:var(--muted);font-weight:600;margin-left:2px}
+.card .meta{font-size:12px;color:var(--muted);margin-top:8px}
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;padding:3px 8px;border-radius:5px;margin-top:10px}
+.tag.up{color:var(--up);background:rgba(182,71,59,.09)}
+.tag.down{color:var(--down);background:rgba(28,125,87,.10)}
+.tag.flat{color:var(--muted);background:var(--hair2)}
+
+.panel{background:var(--surface);border:1px solid var(--hair);border-radius:10px;padding:20px 20px 16px;box-shadow:var(--shadow);margin-top:14px}
+.phead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:2px}
+.panel h2{font-size:15px;font-weight:700;margin:0;letter-spacing:-.01em}
+.panel .note{font-size:12px;color:var(--muted);margin:0}
+.legend{display:flex;gap:16px;font-size:11.5px;color:var(--muted);margin:9px 0 2px}
+.legend i{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:6px;border-radius:2px}
+.chartbox{position:relative;min-height:120px}
+.svgwrap{width:100%}
+.empty{display:flex;align-items:center;justify-content:center;text-align:center;min-height:230px;
+  color:var(--muted);font-size:13.5px;line-height:1.6;padding:20px}
+.empty b{color:var(--ink);font-weight:600}
+.tt{position:absolute;pointer-events:none;opacity:0;transform:translate(-50%,-115%);transition:opacity .12s;
+  background:var(--ink);color:#fff;border-radius:7px;padding:6px 10px;font-size:12px;white-space:nowrap;z-index:5;box-shadow:0 6px 18px -6px rgba(0,0,0,.4)}
+.tt .m{opacity:.7;font-size:10.5px}.tt b{font-weight:600}
+
+.rank{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.row{display:grid;grid-template-columns:128px 1fr 48px;align-items:center;gap:14px;cursor:pointer;padding:1px 0}
+.row .nm{font-size:13px;font-weight:500;color:var(--muted);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row.on .nm{color:var(--ink);font-weight:600}
+.bar{height:14px;background:var(--hair2);border-radius:4px;overflow:hidden}
+.bar>span{display:block;height:100%;width:0;background:var(--natl);border-radius:4px;transition:width .55s cubic-bezier(.2,.7,.2,1)}
+.row.on .bar>span{background:var(--accent)}
+.row .nb{font-size:13px;font-weight:600;text-align:right}
+
+footer{margin-top:24px;font-size:11.5px;color:var(--muted);line-height:1.65}
+footer b{color:var(--ink);font-weight:600}
+footer a{color:var(--accent);text-decoration:none}
+footer a:hover{text-decoration:underline}
+footer .src{margin-top:8px}
+
+.state{padding:60px 10px;text-align:center;color:var(--muted);font-size:14px}
+.state.err{color:var(--up)}
+.fade{opacity:0;transform:translateY(7px);animation:rise .45s cubic-bezier(.2,.7,.2,1) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+.d1{animation-delay:.03s}.d2{animation-delay:.08s}.d3{animation-delay:.13s}.d4{animation-delay:.18s}.d5{animation-delay:.23s}
+@media(max-width:680px){.kpis{grid-template-columns:1fr}.top{flex-direction:column}.vint{justify-content:flex-start}.row{grid-template-columns:100px 1fr 44px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top fade d1">
+    <div class="brand">
+      <div class="eyebrow">Labour Force Survey &middot; Population Estimates</div>
+      <h1>Canadian Cities &mdash; Labour &amp; Population</h1>
+    </div>
+    <div class="vint" id="vint"></div>
+  </div>
+  <p class="sub fade d1">Figures are for each <b>Census Metropolitan Area / Census Agglomeration</b> &mdash; the urban core plus surrounding municipalities linked by commuting, typically larger than the city proper. Monthly labour data is published only for the larger areas; smaller capitals are shown with population only.</p>
+
+  <div id="state" class="state">Loading the latest Statistics Canada data&hellip;</div>
+
+  <div id="app" style="display:none">
+    <div class="seg" id="seg"></div>
+    <p class="seglegend" id="seglegend"></p>
+
+    <div class="kpis" id="kpis"></div>
+
+    <div class="panel">
+      <div class="phead">
+        <h2 id="trendTitle">Unemployment rate</h2>
+        <p class="note">Seasonally adjusted &middot; 3-month moving average</p>
+      </div>
+      <div class="legend" id="legend">
+        <span><i style="background:var(--accent)"></i><span id="legCity">City</span></span>
+        <span><i style="background:var(--natl)"></i>Canada</span>
+      </div>
+      <div class="chartbox"><div class="svgwrap" id="chart"></div><div class="tt" id="tt"></div></div>
+    </div>
+
+    <div class="panel">
+      <div class="phead">
+        <h2>Ranked by unemployment rate</h2>
+        <p class="note">Latest month &middot; tap to focus</p>
+      </div>
+      <div class="rank" id="rank"></div>
+      <p class="note" id="rankfoot" style="margin-top:12px"></p>
+    </div>
+  </div>
+
+  <footer>
+    <b>Geography.</b> Values are for Census Metropolitan Areas (CMA) or Census Agglomerations (CA) as defined by Statistics Canada's Standard Geographical Classification, not municipal city limits.<br>
+    <div class="src"><b>Sources.</b></div>
+    <div class="src">&bull; Employment &amp; unemployment rate &mdash; Statistics Canada, <a id="srcEmp" href="https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=1410045901" target="_blank" rel="noopener">Table 14-10-0459-01</a>: Labour force characteristics by census metropolitan area, three-month moving average, seasonally adjusted.</div>
+    <div class="src">&bull; Population &mdash; Statistics Canada, <a href="https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=1710014801" target="_blank" rel="noopener">Table 17-10-0148-01</a>: Population estimates, July 1, by census metropolitan area and census agglomeration.</div>
+    <div class="src">&bull; Iqaluit population &mdash; Statistics Canada, <a href="https://www12.statcan.gc.ca/census-recensement/2021/dp-pd/prof/index.cfm?Lang=E" target="_blank" rel="noopener">2021 Census of Population</a> (Iqaluit, City — census subdivision), used because Iqaluit is not in the annual sub-provincial estimates.</div>
+    <div class="src">&bull; National unemployment rate (comparison line) &mdash; Table 14-10-0459-01, Canada.</div>
+    <div class="src" style="margin-top:8px"><b>Coverage note.</b> Charlottetown, Yellowknife, Whitehorse and Iqaluit are not covered by the monthly Labour Force Survey at this geography, so no unemployment or employment figure is shown for them.</div>
+    <div class="src" style="margin-top:8px;color:var(--faint)">Data is refreshed automatically from the StatCan Web Data Service. Statistics Canada information used under the <a href="https://www.statcan.gc.ca/en/reference/licence" target="_blank" rel="noopener">Statistics Canada Open Licence</a>. <span id="stamp"></span></div>
+  </footer>
+</div>
+
+<script>
+let DATA, cities, months, active;
+const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const fmtMonth=m=>{const[y,mo]=m.split("-");return MON[+mo-1]+" "+y.slice(2);};
+const fmtFull =m=>{const[y,mo]=m.split("-");return MON[+mo-1]+" "+y;};
+const lastVal=a=>{for(let i=a.length-1;i>=0;i--)if(a[i]!=null)return a[i];return null;};
+const prevVal=a=>{let s=false;for(let i=a.length-1;i>=0;i--){if(a[i]!=null){if(s)return a[i];s=true;}}return null;};
+function fmtPop(p){
+  if(p>=1e6) return [(p/1e6).toFixed(2),"M"];
+  if(p>=1e5) return [Math.round(p/1e3).toLocaleString(),"K"];
+  return [(p/1e3).toFixed(1),"K"];
+}
+
+async function init(){
+  try{
+    const r=await fetch("data.json?ts="+Date.now(),{cache:"no-store"});
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    DATA=await r.json();
+    cities=Object.keys(DATA.cities);
+    months=DATA.meta.months;
+    active=cities[0];
+    document.getElementById("state").style.display="none";
+    const app=document.getElementById("app");
+    app.style.display="block";app.classList.add("fade","d2");
+    vint();render();stamp();
+  }catch(e){
+    const s=document.getElementById("state");
+    s.className="state err";
+    s.innerHTML="Couldn't load <b>data.json</b> ("+e.message+").<br>If you just deployed, make sure data.json sits in the site root next to index.html, and open the page over http (not a file:// path).";
+  }
+}
+
+function vint(){
+  const nLab=cities.filter(c=>DATA.cities[c].labour).length;
+  document.getElementById("vint").innerHTML=
+    `<span class="chip">Labour <b>${fmtFull(DATA.meta.latest_month)}</b></span>`+
+    `<span class="chip">Population <b>${DATA.meta.pop_year}</b></span>`+
+    `<span class="chip"><b>${cities.length}</b> areas &middot; <b>${nLab}</b> with labour data</span>`;
+}
+function stamp(){
+  if(!DATA.meta.generated_at) return;
+  const d=new Date(DATA.meta.generated_at);
+  document.getElementById("stamp").textContent="Last refreshed "+d.toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"})+".";
+}
+function seg(){
+  document.getElementById("seg").innerHTML=cities.map(c=>
+    `<button class="${c===active?'on':''}" data-c="${c}">${c}${DATA.cities[c].labour?"":'<span class="dot"></span>'}</button>`).join("");
+  document.querySelectorAll("#seg button").forEach(b=>b.onclick=()=>{active=b.dataset.c;render();});
+  document.getElementById("seglegend").innerHTML='&bull;&nbsp; Population only &mdash; monthly labour-force data is not published by StatCan for these areas.';
+}
+function kpis(){
+  const c=DATA.cities[active];
+  let urCard,emCard;
+  if(c.labour){
+    const ur=lastVal(c.unemp_rate),urp=prevVal(c.unemp_rate),em=lastVal(c.employment);
+    const d=(ur!=null&&urp!=null)?ur-urp:null;
+    let cls="flat",txt="No change vs. prior month";
+    if(d!=null&&Math.abs(d)>=0.05){cls=d>0?"up":"down";txt=(d>0?"▲ +":"▼ ")+Math.abs(d).toFixed(1)+" pts vs. prior month";}
+    urCard=`<div class="lab">Unemployment</div><div class="val num">${ur.toFixed(1)}<span class="u">%</span></div><div class="tag ${cls}">${txt}</div>`;
+    emCard=`<div class="lab">Employment</div><div class="val num">${(em/1000).toFixed(2)}<span class="u">M</span></div><div class="meta">${Math.round(em).toLocaleString()}k employed</div>`;
+  }else{
+    const kind=c.geo.split(' ·')[0].toLowerCase();
+    urCard=`<div class="lab">Unemployment</div><div class="val na">n/a</div><div class="meta">Not published monthly for this ${kind}</div>`;
+    emCard=`<div class="lab">Employment</div><div class="val na">n/a</div><div class="meta">Not published monthly</div>`;
+  }
+  let popCard;
+  if(c.population!=null){
+    const [pv,pu]=fmtPop(c.population);
+    const meta=c.pop_year===DATA.meta.pop_year ? `${c.population.toLocaleString()} residents` : `${c.population.toLocaleString()} &middot; 2021 Census`;
+    popCard=`<div class="lab">Population &middot; ${c.pop_year}</div><div class="val num">${pv}<span class="u">${pu}</span></div><div class="meta">${meta}</div>`;
+  }else{
+    popCard=`<div class="lab">Population</div><div class="val na">n/a</div><div class="meta">Not available</div>`;
+  }
+  document.getElementById("kpis").innerHTML=
+    `<div class="card fade d3">${urCard}</div><div class="card fade d3">${emCard}</div><div class="card fade d3">${popCard}</div>`;
+}
+let CX=[],CV=[];
+function chart(){
+  const c=DATA.cities[active];
+  const chartEl=document.getElementById("chart"),legend=document.getElementById("legend");
+  document.getElementById("trendTitle").textContent=active+" — unemployment rate";
+  if(!c.labour){
+    legend.style.display="none";
+    chartEl.innerHTML=`<div class="empty">Statistics Canada does not publish monthly Labour Force Survey estimates for <b>${active}</b>.<br>This ${c.geo} appears here with population only.</div>`;
+    return;
+  }
+  legend.style.display="flex";
+  document.getElementById("legCity").textContent=active;
+  const W=920,H=300,pad={t:14,r:16,b:30,l:34};
+  let lo=Infinity,hi=-Infinity;
+  [c.unemp_rate,DATA.national.unemp_rate].forEach(s=>s.forEach(v=>{if(v!=null){lo=Math.min(lo,v);hi=Math.max(hi,v);}}));
+  lo=Math.floor(lo-0.6);hi=Math.ceil(hi+0.6);
+  const n=months.length;
+  const X=i=>pad.l+(W-pad.l-pad.r)*(i/(n-1));
+  const Y=v=>pad.t+(H-pad.t-pad.b)*(1-(v-lo)/(hi-lo));
+  const line=s=>{let d="",st=false;s.forEach((v,i)=>{if(v==null)return;d+=(st?"L":"M")+X(i).toFixed(1)+" "+Y(v).toFixed(1)+" ";st=true;});return d;};
+  const area=s=>{let d="",st=false,first=0;s.forEach((v,i)=>{if(v==null)return;if(!st){first=i;d+="M"+X(i).toFixed(1)+" "+Y(v).toFixed(1)+" ";st=true;}else d+="L"+X(i).toFixed(1)+" "+Y(v).toFixed(1)+" ";});if(st)d+="L"+X(n-1).toFixed(1)+" "+Y(lo).toFixed(1)+" L"+X(first).toFixed(1)+" "+Y(lo).toFixed(1)+" Z";return d;};
+  let grid="",yl="";const step=Math.max(1,Math.round((hi-lo)/5));
+  for(let g=lo;g<=hi;g+=step){grid+=`<line x1="${pad.l}" y1="${Y(g)}" x2="${W-pad.r}" y2="${Y(g)}" stroke="var(--hair)" stroke-width="1"/>`;
+    yl+=`<text x="${pad.l-8}" y="${Y(g)+3.5}" font-size="10.5" fill="var(--muted)" text-anchor="end">${g}</text>`;}
+  let xl="";for(let i=0;i<n;i+=4)xl+=`<text x="${X(i)}" y="${H-10}" font-size="10.5" fill="var(--muted)" text-anchor="middle">${fmtMonth(months[i])}</text>`;
+  const li=c.unemp_rate.length-1,lv=lastVal(c.unemp_rate);
+  CX=months.map((_,i)=>X(i));CV=c.unemp_rate;
+  chartEl.innerHTML=
+    `<svg viewBox="0 0 ${W} ${H}" width="100%" id="svg" class="num">
+      <defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="var(--accent)" stop-opacity=".12"/>
+        <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>
+      ${grid}${yl}${xl}
+      <path d="${area(c.unemp_rate)}" fill="url(#ag)"/>
+      <path d="${line(DATA.national.unemp_rate)}" fill="none" stroke="var(--natl)" stroke-width="1.6" stroke-dasharray="4 4"/>
+      <path d="${line(c.unemp_rate)}" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="guide" x1="0" y1="${pad.t}" x2="0" y2="${H-pad.b}" stroke="var(--ink)" stroke-width="1" opacity="0"/>
+      <circle id="hd" r="4" fill="var(--accent)" stroke="#fff" stroke-width="1.5" opacity="0"/>
+      <circle cx="${X(li)}" cy="${Y(lv)}" r="4" fill="var(--accent)" stroke="#fff" stroke-width="1.5"/>
+      <text x="${X(li)}" y="${Y(lv)-10}" font-size="12" font-weight="700" fill="var(--accent)" text-anchor="middle">${lv.toFixed(1)}%</text>
+      <rect id="hit" x="0" y="0" width="${W}" height="${H}" fill="transparent"/>
+    </svg>`;
+  hookHover(Y);
+}
+function hookHover(Y){
+  const svg=document.getElementById("svg"),hit=document.getElementById("hit"),
+        guide=document.getElementById("guide"),hd=document.getElementById("hd"),tt=document.getElementById("tt");
+  hit.onmousemove=e=>{
+    const r=svg.getBoundingClientRect(),sx=(e.clientX-r.left)/r.width*920;
+    let bi=0,bd=1e9;CX.forEach((x,i)=>{const dd=Math.abs(x-sx);if(CV[i]!=null&&dd<bd){bd=dd;bi=i;}});
+    const v=CV[bi];if(v==null)return;const px=CX[bi],py=Y(v);
+    guide.setAttribute("x1",px);guide.setAttribute("x2",px);guide.setAttribute("opacity",".16");
+    hd.setAttribute("cx",px);hd.setAttribute("cy",py);hd.setAttribute("opacity","1");
+    tt.style.opacity="1";tt.style.left=(px/920*r.width)+"px";tt.style.top=(py/300*r.height)+"px";
+    tt.innerHTML=`<div class="m">${fmtFull(months[bi])}</div><b>${v.toFixed(1)}%</b>`;
+  };
+  hit.onmouseleave=()=>{guide.setAttribute("opacity","0");hd.setAttribute("opacity","0");tt.style.opacity="0";};
+}
+function rank(){
+  const rows=cities.filter(c=>DATA.cities[c].labour)
+                   .map(c=>({c,ur:lastVal(DATA.cities[c].unemp_rate)})).sort((a,b)=>b.ur-a.ur);
+  const mx=Math.max(...rows.map(r=>r.ur));
+  document.getElementById("rank").innerHTML=rows.map(r=>
+    `<div class="row ${r.c===active?'on':''}" data-c="${r.c}"><div class="nm">${r.c}</div>
+       <div class="bar"><span data-w="${(r.ur/mx*100).toFixed(1)}"></span></div>
+       <div class="nb num">${r.ur.toFixed(1)}%</div></div>`).join("");
+  requestAnimationFrame(()=>document.querySelectorAll(".bar>span").forEach(s=>s.style.width=s.dataset.w+"%"));
+  document.querySelectorAll(".row").forEach(el=>el.onclick=()=>{active=el.dataset.c;render();});
+  const popOnly=cities.filter(c=>!DATA.cities[c].labour);
+  document.getElementById("rankfoot").innerHTML=popOnly.length
+    ? `Not ranked (no monthly labour data): ${popOnly.join(", ")}.` : "";
+}
+function render(){seg();kpis();chart();rank();}
+init();
+</script>
+</body>
+</html>
