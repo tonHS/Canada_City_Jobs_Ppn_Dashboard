@@ -140,8 +140,63 @@ def build() -> dict:
     return data
 
 
+# Minimum number of cities we expect to have labour data. The CITIES list has
+# 13 CMAs with emp_geo set, so anything below this means StatCan labels drifted
+# or the table layout changed.
+MIN_LABOUR_CITIES = 12
+# Refuse to publish if the latest labour month is older than this many days.
+# StatCan releases monthly, so anything beyond ~75 days means the schedule is
+# stalled or the table moved.
+MAX_LATEST_MONTH_AGE_DAYS = 75
+
+
+def validate(out: dict) -> None:
+    """Raise ValueError if the generated dataset looks broken.
+
+    Causes the workflow to exit non-zero so GitHub emails the repo owner and
+    the previous data.json stays in the repo untouched.
+    """
+    problems = []
+
+    n_lab = sum(1 for d in out["cities"].values() if d["labour"])
+    if n_lab < MIN_LABOUR_CITIES:
+        problems.append(f"only {n_lab} cities have labour data (expected ≥ {MIN_LABOUR_CITIES})")
+
+    nat = out["national"]["unemp_rate"]
+    if not any(v is not None for v in nat):
+        problems.append("national unemployment series is entirely null")
+
+    latest = out["meta"]["latest_month"]
+    try:
+        latest_dt = dt.datetime.strptime(latest, "%Y-%m").replace(tzinfo=dt.timezone.utc)
+        age_days = (dt.datetime.now(dt.timezone.utc) - latest_dt).days
+        if age_days > MAX_LATEST_MONTH_AGE_DAYS:
+            problems.append(f"latest month {latest} is {age_days} days old (max {MAX_LATEST_MONTH_AGE_DAYS})")
+    except ValueError:
+        problems.append(f"latest_month '{latest}' is not parseable as YYYY-MM")
+
+    missing_pop = [n for n, d in out["cities"].items() if d["population"] is None]
+    if missing_pop:
+        problems.append(f"missing population for: {', '.join(missing_pop)}")
+
+    for name, d in out["cities"].items():
+        if d["labour"] and lastVal_py(d["unemp_rate"]) is None:
+            problems.append(f"{name}: labour=True but no recent unemp_rate value")
+
+    if problems:
+        raise ValueError("data.json failed validation:\n  - " + "\n  - ".join(problems))
+
+
+def lastVal_py(seq):
+    for v in reversed(seq):
+        if v is not None:
+            return v
+    return None
+
+
 if __name__ == "__main__":
     out = build()
+    validate(out)
     with open("data.json", "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
     n_lab = sum(1 for d in out["cities"].values() if d["labour"])
