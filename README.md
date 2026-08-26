@@ -6,6 +6,10 @@ Canada open data. It refreshes itself automatically: a GitHub Action re-pulls
 StatCan every few hours and commits a fresh `data.json`, and Vercel redeploys on
 each commit.
 
+# Verification and Disclaimer
+
+This is AI-generated with spot-check verification against external data sources. This spot-check verification process discovered no errors and since the dashboard does little analysis of its own but simply displays the numbers, it seems reasonable to deem this dashboard and its dynamic data updates reliable. However, to be clear, please do not use these numbers or anything in this dashboard for any material purposes without checking them yourself. 
+
 ## How it works
 
 ```
